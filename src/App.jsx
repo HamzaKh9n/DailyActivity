@@ -224,6 +224,17 @@ export const defaultDailyDefaults = {
     stress: 0,
     energy: 0,
   },
+  lifestyle: {
+    caffeineCups: 0,
+    caffeineSource: 'None',
+    smokingType: 'None',
+    smokingQuantity: 0,
+    alcoholDrinks: 0,
+    workoutType: 'No workout',
+    workoutDuration: 0,
+    screenTimeHours: 0,
+    outdoorTimeHours: 0,
+  },
   healthyBehaviors: ['Walking', 'Breaks'],
 }
 
@@ -625,6 +636,41 @@ function App() {
     }
   }
 
+  const saveTodayAsDefaults = () => {
+    if (isDailyLogEmpty(dailyLog)) {
+      showToast('Add at least one value today before saving defaults.')
+      return
+    }
+
+    const meals = dailyLog.meals || []
+    const activities = dailyLog.activities || []
+    const lifestyle = dailyLog.lifestyle || {}
+    const hasHydration = dailyLog.hydration?.liters !== null || dailyLog.hydration?.glasses !== null || dailyLog.hydration?.didNotTrack
+    const mealDefaults = meals.map((meal, index) => ({
+      id: `def-m-${index + 1}`,
+      type: meal.type || `Meal ${index + 1}`,
+      description: meal.food || '',
+      duration: '',
+    }))
+    const nextDefaults = {
+      ...dailyDefaults,
+      configured: true,
+      ...(mealDefaults.length > 0 ? { mealsCount: mealDefaults.filter(meal => meal.type !== 'Snack').length || mealDefaults.length, meals: mealDefaults.filter(meal => meal.type !== 'Snack'), snacksCount: mealDefaults.filter(meal => meal.type === 'Snack').length, snacks: mealDefaults.filter(meal => meal.type === 'Snack').map(meal => ({ id: meal.id, name: 'Snack', description: meal.description })) } : {}),
+      ...(activities.length > 0 ? { exercise: { ...(dailyDefaults.exercise || {}), usuallyExercise: 'Yes', workoutTypes: [...new Set(activities.map(activity => activity.type).filter(Boolean))], duration: `${Math.round(activities.reduce((total, activity) => total + (Number(activity.durationMinutes) || 0), 0) / activities.length)} min` } } : {}),
+      ...(hasHydration ? { hydration: { ...(dailyDefaults.hydration || {}), mode: dailyLog.hydration.didNotTrack ? "Don't track" : 'Liters', amount: dailyLog.hydration.didNotTrack ? 0 : (dailyLog.hydration.liters || dailyDefaults.hydration?.amount || 0) } } : {}),
+      ...(dailyLog.sleep?.bedtime || dailyLog.sleep?.wakeTime ? { typicalSleepDuration: calculateSleepDurationText(dailyLog.sleep.bedtime, dailyLog.sleep.wakeTime) || dailyDefaults.typicalSleepDuration } : {}),
+      ...(dailyLog.sedentary ? { sedentary: { ...(dailyDefaults.sedentary || {}), typicalSedentaryHours: dailyLog.sedentary } } : {}),
+      ...(dailyLog.wellbeing?.mood || dailyLog.wellbeing?.stress || dailyLog.wellbeing?.energy ? { wellbeingDefaults: { ...(dailyDefaults.wellbeingDefaults || {}), mood: dailyLog.wellbeing.mood || dailyDefaults.wellbeingDefaults?.mood || 0, stress: dailyLog.wellbeing.stress || dailyDefaults.wellbeingDefaults?.stress || 0, energy: dailyLog.wellbeing.energy || dailyDefaults.wellbeingDefaults?.energy || 0 } } : {}),
+      lifestyle: { ...(dailyDefaults.lifestyle || {}), ...Object.fromEntries(Object.entries(lifestyle).filter(([, value]) => value !== undefined && value !== null && value !== '' && value !== 0)) },
+    }
+    if (dailyLog.medications?.length > 0) {
+      nextDefaults.medicationsCount = dailyLog.medications.length
+      nextDefaults.medications = dailyLog.medications.map((medication, index) => ({ id: `def-med-${index + 1}`, name: medication.name }))
+    }
+    setDailyDefaults(nextDefaults)
+    showToast('Today\'s filled values are now saved as your defaults.')
+  }
+
   // Defensive Actions
   const applyDailyDefaults = (force = false) => {
     const meals = dailyLog?.meals || []
@@ -927,6 +973,8 @@ function App() {
               resetToEmptyDay={resetToEmptyDay}
               setQuickAddType={setQuickAddType}
               setShowEditDefaultsModal={setShowEditDefaultsModal}
+              setDailyDefaults={setDailyDefaults}
+              saveTodayAsDefaults={saveTodayAsDefaults}
               setShowRoutineSetupModal={setShowRoutineSetupModal}
               showToast={showToast}
               setView={setView}
@@ -1304,6 +1352,7 @@ function DailyActivityPage({
   setQuickAddType,
   setShowEditDefaultsModal,
   setShowRoutineSetupModal,
+  saveTodayAsDefaults,
   showToast,
   setView,
   onSaveToday,
@@ -1973,6 +2022,9 @@ function DailyActivityPage({
             </div>
             <button className="primary-button save-activity-btn" onClick={() => showToast('Today\'s actual daily activity record saved successfully.')}>
               <Check size={16} /> Save Record
+            </button>
+            <button className="save-defaults-button" type="button" onClick={saveTodayAsDefaults}>
+              Save today's filled values as defaults
             </button>
           </div>
         </div>

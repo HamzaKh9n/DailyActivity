@@ -99,6 +99,8 @@
 .section-body{padding:22px;border-top:1px solid var(--line);background:#fff}
 .section-done-button{margin-top:20px;width:100%;min-height:44px;border:0;border-radius:10px;background:#28785e;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
 .section-done-button:hover{background:#20634c}
+.save-defaults-button{border:0;background:transparent;color:#28785e;text-decoration:underline;text-underline-offset:3px;font-size:11px;cursor:pointer;padding:8px 4px}
+.save-defaults-button:hover{color:#135340}
 
 /* Form Controls Inside Sections */
 .section-grid-form{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
