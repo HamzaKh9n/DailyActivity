@@ -594,6 +594,7 @@ export function generateChronologicalTimeline(log) {
 
 function App() {
   const [view, setView] = useState('Dashboard')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   // Three Core Data Structures with Lazy Initializers
   const [dailyLog, setDailyLog] = useState(() => createEmptyDailyLog())
@@ -830,10 +831,12 @@ function App() {
         </div>
       )}
 
-      <aside className="sidebar">
+      {mobileNavOpen && <button className="mobile-nav-backdrop" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+      <aside className={mobileNavOpen ? 'sidebar mobile-open' : 'sidebar'}>
         <div className="brand">
           <span className="brand-mark"><HeartPulse size={20} /></span>
           <span>heal <b>24/7</b></span>
+          <button className="mobile-nav-close" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)}><X size={20} /></button>
         </div>
         <div className="side-label">Your space</div>
         <nav>
@@ -847,7 +850,10 @@ function App() {
             <button
               key={label}
               className={view === label ? 'nav-item active' : 'nav-item'}
-              onClick={() => setView(label)}
+              onClick={() => {
+                setView(label)
+                setMobileNavOpen(false)
+              }}
             >
               <Icon size={18} />
               <span>{label}</span>
@@ -864,7 +870,7 @@ function App() {
             </div>
             <ChevronRight size={16} />
           </div>
-          <button className="nav-item">
+          <button className="nav-item" onClick={() => setMobileNavOpen(false)}>
             <Settings size={18} />
             <span>Settings</span>
           </button>
@@ -876,7 +882,7 @@ function App() {
 
       <main className="main-content">
         <header className="topbar">
-          <button className="mobile-menu"><Menu /></button>
+          <button className="mobile-menu" aria-label="Open navigation" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen(true)}><Menu /></button>
           <div className="crumb">
             My health <ChevronRight size={14} /> <b>{view}</b>
           </div>
